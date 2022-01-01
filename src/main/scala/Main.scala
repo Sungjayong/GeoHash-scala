@@ -1,4 +1,4 @@
-import Geohash._
+import GeohashCalc._
 
 object Main {
   def main(args: Array[String]): Unit = {

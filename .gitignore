@@ -1,3 +1,9 @@
-src/main/scala/Device.scala
+./src/main/scala/Device.scala
 
-src/test/scala/DeviceSpec.scala
+./src/test/scala/DeviceSpec.scala
+
+./target
+
+*.class
+
+.DS_Store

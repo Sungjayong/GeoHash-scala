@@ -13,6 +13,7 @@ lazy val `akka-sample-cluster-scala` = project
     Compile / javacOptions ++= Seq("-Xlint:unchecked", "-Xlint:deprecation"),
     run / javaOptions ++= Seq("-Xms128m", "-Xmx1024m", "-Djava.library.path=./target/native"),
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-actor-typed"           % akkaVersion,
       "com.typesafe.akka" %% "akka-cluster-typed"         % akkaVersion,
       "com.typesafe.akka" %% "akka-serialization-jackson" % akkaVersion,

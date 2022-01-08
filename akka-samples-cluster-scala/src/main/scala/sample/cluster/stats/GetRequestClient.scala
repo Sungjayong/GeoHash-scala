@@ -18,7 +18,7 @@ object GetRequestClient {
   def apply(service: ActorRef[StatsService.Get]): Behavior[Event] =
     Behaviors.setup { ctx =>
       Behaviors.withTimers { timers =>
-        timers.startTimerWithFixedDelay(Tick, Tick, 2.seconds)
+        timers.startTimerWithFixedDelay(Tick, Tick, 4.seconds)
         val responseAdapter = ctx.messageAdapter(ServiceResponse)
 
         Behaviors.receiveMessage {

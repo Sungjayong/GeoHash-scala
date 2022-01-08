@@ -45,6 +45,7 @@ object StatsService {
     }
   }
 }
+
 object UpdateAggregator {
   sealed trait Event
   private case object Timeout extends Event
@@ -52,7 +53,7 @@ object UpdateAggregator {
 
   def apply(ghVal: String, event: String, workers: ActorRef[StatsWorker.Process], replyTo: ActorRef[StatsService.Response]): Behavior[Event] =
     Behaviors.setup { ctx =>
-      ctx.setReceiveTimeout(3.seconds, Timeout)
+      ctx.setReceiveTimeout(60.seconds, Timeout)
       val responseAdapter = ctx.messageAdapter[StatsWorker.Processed](processed =>
         UpdateComplete()
       )
@@ -70,7 +71,6 @@ object UpdateAggregator {
         replyTo ! StatsService.JobFailed("Service unavailable, try again later")
         Behaviors.stopped
     }
-
 }
 
 object GetAggregator {
@@ -80,7 +80,7 @@ object GetAggregator {
 
   def apply(ghVal: String, workers: ActorRef[StatsWorker.Process], replyTo: ActorRef[StatsService.Response]): Behavior[Event] =
     Behaviors.setup { ctx =>
-      ctx.setReceiveTimeout(3.seconds, Timeout)
+      ctx.setReceiveTimeout(60.seconds, Timeout)
       val responseAdapter = ctx.messageAdapter[StatsWorker.Processed](processed =>
         GetComplete(processed.item)
       )
@@ -99,6 +99,5 @@ object GetAggregator {
         replyTo ! StatsService.JobFailed("Service unavailable, try again later")
         Behaviors.stopped
     }
-
 }
 //#service

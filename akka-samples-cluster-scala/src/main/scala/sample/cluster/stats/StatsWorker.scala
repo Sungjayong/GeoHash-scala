@@ -33,34 +33,34 @@ object StatsWorker {
     Behaviors.receiveMessage {
 
       // Get 요청 시.
-        case Process(ghVal: String, replyTo) => {
-          val replyElements = List(ghVal, west(ghVal), east(ghVal),
-                                    south(ghVal), north(ghVal), southeast(ghVal),
-                                    southwest(ghVal), northeast(ghVal), northwest(ghVal))
-                              .filter(s => cashMap.contains(s))
-                              .map(s => cashMap(s))
-          ctx.log.info("Worker processing request [{}]", replyElements)
+      case Process(ghVal: String, replyTo) => {
+        val replyElements = List(ghVal, west(ghVal), east(ghVal),
+                                  south(ghVal), north(ghVal), southeast(ghVal),
+                                  southwest(ghVal), northeast(ghVal), northwest(ghVal))
+                            .filter(s => cashMap.contains(s))
+                            .map(s => cashMap(s))
+        ctx.log.info("Worker processing request [{}]", replyElements)
 
-          replyTo ! Processed(replyElements)
+        replyTo ! Processed(replyElements)
+        Behaviors.same
+      }
+
+      // Update 요청 시.
+      case Process(item: (String, String), replyTo) => {
+        cashMap = cashMap + (item._1 -> item._2)
+        Behaviors.withTimers[Command] { timers =>
+          ctx.log.info("timer start")
+          timers startSingleTimer(Delete(item._1), 30.seconds)
           Behaviors.same
         }
+        replyTo ! Processed()
+        Behaviors.same
+      }
 
-        // Update 요청 시.
-        case Process(item: (String, String), replyTo) => {
-          cashMap = cashMap + (item._1 -> item._2)
-          Behaviors.withTimers[Command] { timers =>
-            ctx.log.info("timer start")
-            timers startSingleTimer(Delete(item._1), 30.seconds)
-            Behaviors.same
-          }
-          replyTo ! Processed()
-          Behaviors.same
-        }
-
-        case Delete(key) => {
-          cashMap = cashMap - key
-          Behaviors.same
-        }
+      case Delete(key) => {
+        cashMap = cashMap - key
+        Behaviors.same
+      }
     }
 }
 //#worker

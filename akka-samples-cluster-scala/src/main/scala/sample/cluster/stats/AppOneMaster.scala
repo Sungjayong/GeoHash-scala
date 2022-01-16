@@ -47,8 +47,8 @@ object AppOneMaster {
         (0 to numberOfWorkers).foreach { n =>
           val worker = ctx.spawn(StatsWorker(), s"StatsWorker$n")
           ctx.system.receptionist ! Receptionist
-            .Register(WorkerServiceKey, worker)
-        }
+            .Register(WorkerServiceKey, )
+        }worker
       }
       if (cluster.selfMember.hasRole("client")) {
         ctx.spawn(GetRequestClient(serviceProxy), "Client")

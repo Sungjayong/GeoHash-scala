@@ -1,15 +1,14 @@
-import akka.Done
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
 import akka.pattern.StatusReply
 import akka.persistence.typed.PersistenceId
-import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
-import akka.stream.alpakka.cassandra.scaladsl.{CassandraSession}
+import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
+import scala.concurrent.duration.DurationInt
 
 object MyPersistentBehavior {
   sealed trait Command
   final case class Join(name: String, lat: Double, lon: Double, replyTo: ActorRef[StatusReply[Summary]]) extends Command
   final case class Leave(name: String, replyTo: ActorRef[StatusReply[Summary]]) extends Command
-  final case class Get(name: String) extends Command
+  final case class Get(name: String, replyTo: ActorRef[StatusReply[Summary]]) extends Command
 
   sealed trait Event
   final case class Joined(name: String, lat: Double, lon: Double) extends Event
@@ -44,14 +43,13 @@ object MyPersistentBehavior {
     command match {
       case Join(name, lat, lon, replyTo) => Effect.persist(Joined(name, lat, lon)).thenRun(updatedState => replyTo ! StatusReply.Success(updatedState.toSummary))
       case Leave(name, replyTo) => Effect.persist(Left(name)).thenRun(updatedState => replyTo ! StatusReply.Success(updatedState.toSummary))
-      case Get(name) => Effect.persist(Got(name))
+      case Get(name, replyTo) => Effect.persist(Got(name)).thenRun(getState => replyTo ! StatusReply.Success(getState.toSummary))
     }
   }
 
   val eventHandler: (State, Event) => State = { (state, event) =>
     event match {
       case Joined(name, lat, lon) => {
-        //TODO. Cassandra 연결.
         state.join(name, lat, lon)
       }
       case Left(name) => {
@@ -61,23 +59,15 @@ object MyPersistentBehavior {
         state.get(name)
       }
     }
-
   }
 
-  var Session: CassandraSession = null
-  var Keyspace: String = ""
-  val Table: String = "membership"
-
-//  def apply(session: CassandraSession, keyspace: String): Behavior[Command] = {
   def apply(): Behavior[Command] = {
-//    Session = session
-//    Keyspace = keyspace
     EventSourcedBehavior[Command, Event, State](
-
       persistenceId = PersistenceId.ofUniqueId("abc"),
       emptyState = State.empty,
       commandHandler = (state, cmd) => commandHandler(state, cmd),
-      eventHandler = (state, evt) => eventHandler(state, evt)
-    )
+      eventHandler = (state, evt) => eventHandler(state, evt))
+        .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 100, keepNSnapshots = 3))
+        .onPersistFailure(SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1))
   }
 }

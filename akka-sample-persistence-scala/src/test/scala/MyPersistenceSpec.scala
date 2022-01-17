@@ -27,5 +27,16 @@ class MyPersistenceSpec extends ScalaTestWithActorTestKit(s"""
       membership ! MyPersistentBehavior.Leave("foo", probe.ref)
       probe.expectMessage(StatusReply.Success(MyPersistentBehavior.Summary(Map.empty)))
     }
+
+    "get member" in {
+      val membership = testKit.spawn(MyPersistentBehavior())
+      val probe = testKit.createTestProbe[StatusReply[MyPersistentBehavior.Summary]]
+      membership ! MyPersistentBehavior.Join("foo", 42.213, 23.125, probe.ref)
+      probe.expectMessage(StatusReply.Success(MyPersistentBehavior.Summary(Map("foo" -> (42.213, 23.125)))))
+      membership ! MyPersistentBehavior.Join("foo2", 42.213, 23.125, probe.ref)
+      probe.expectMessage(StatusReply.Success(MyPersistentBehavior.Summary(Map("foo" -> (42.213, 23.125), "foo2" -> (42.213, 23.125)))))
+      membership ! MyPersistentBehavior.Get("foo", probe.ref)
+      probe.expectMessage(StatusReply.Success(MyPersistentBehavior.Summary(Map("foo" -> (42.213, 23.125)))))
+    }
   }
 }

@@ -1,18 +1,24 @@
-import akka.actor.typed.{ActorRef, Behavior, SupervisorStrategy}
-import akka.pattern.StatusReply
+import akka.actor.typed.{ActorSystem, Behavior, SupervisorStrategy}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior, RetentionCriteria}
+
 import scala.concurrent.duration.DurationInt
 
 object MyPersistentBehavior {
   sealed trait Command
-  final case class Join(name: String, lat: Double, lon: Double, replyTo: ActorRef[StatusReply[Summary]]) extends Command
-  final case class Leave(name: String, replyTo: ActorRef[StatusReply[Summary]]) extends Command
-  final case class Get(name: String, replyTo: ActorRef[StatusReply[Summary]]) extends Command
 
-  sealed trait Event
+  final case class Join(name: String, lat: Double, lon: Double) extends Command
+
+  final case class Leave(name: String) extends Command
+
+  final case class Get(name: String) extends Command
+
+  sealed trait Eventextends CborSerializable
+
   final case class Joined(name: String, lat: Double, lon: Double) extends Event
+
   final case class Left(name: String) extends Event
+
   final case class Got(name: String) extends Event
 
   final case class Summary(info: Map[String, (Double, Double)]) extends CborSerializable
@@ -27,7 +33,7 @@ object MyPersistentBehavior {
     }
 
     def get(name: String): State = {
-      if(info.contains(name)) copy(info = Map(name -> info(name)))
+      if (info.contains(name)) copy(info = Map(name -> info(name)))
       else State.empty
     }
 
@@ -41,9 +47,9 @@ object MyPersistentBehavior {
 
   val commandHandler: (State, Command) => Effect[Event, State] = { (state, command) =>
     command match {
-      case Join(name, lat, lon, replyTo) => Effect.persist(Joined(name, lat, lon)).thenRun(updatedState => replyTo ! StatusReply.Success(updatedState.toSummary))
-      case Leave(name, replyTo) => Effect.persist(Left(name)).thenRun(updatedState => replyTo ! StatusReply.Success(updatedState.toSummary))
-      case Get(name, replyTo) => Effect.persist(Got(name)).thenRun(getState => replyTo ! StatusReply.Success(getState.toSummary))
+      case Join(name, lat, lon) => Effect.persist(Joined(name, lat, lon))
+      case Leave(name) => Effect.persist(Left(name))
+      case Get(name) => Effect.persist(Got(name))
     }
   }
 
@@ -61,13 +67,21 @@ object MyPersistentBehavior {
     }
   }
 
-  def apply(): Behavior[Command] = {
+  def apply(entityId: String): Behavior[Command] = {
     EventSourcedBehavior[Command, Event, State](
-      persistenceId = PersistenceId.ofUniqueId("abc"),
+      persistenceId = PersistenceId("membership", entityId),
       emptyState = State.empty,
       commandHandler = (state, cmd) => commandHandler(state, cmd),
       eventHandler = (state, evt) => eventHandler(state, evt))
-        .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 100, keepNSnapshots = 3))
-        .onPersistFailure(SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1))
+      .withRetention(RetentionCriteria.snapshotEvery(numberOfEvents = 100, keepNSnapshots = 3))
+      .onPersistFailure(SupervisorStrategy.restartWithBackoff(200.millis, 5.seconds, 0.1))
+  }
+
+  def main(args: Array[String]): Unit = {
+    val system: ActorSystem[Command] = ActorSystem(MyPersistentBehavior("name"), "actor")
+    system ! MyPersistentBehavior.Join("a", 1.0, 2.0)
+    system ! MyPersistentBehavior.Join("b", 2.0, 3.0)
+    system ! MyPersistentBehavior.Leave("a")
+    system ! MyPersistentBehavior.Join("c", 1.0, 2.0)
   }
 }

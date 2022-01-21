@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-cassandra.iml" filepath="$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-cassandra.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-kafka.iml" filepath="$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-kafka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-service-locator.iml" filepath="$PROJECT_DIR$/.idea/modules/lagom-internal-meta-project-service-locator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/membership.iml" filepath="$PROJECT_DIR$/.idea/modules/membership.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/membership-api.iml" filepath="$PROJECT_DIR$/.idea/modules/membership-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/membership-build.iml" filepath="$PROJECT_DIR$/.idea/modules/membership-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/membership-impl.iml" filepath="$PROJECT_DIR$/.idea/modules/membership-impl.iml" />
+    </modules>
+  </component>
+</project>

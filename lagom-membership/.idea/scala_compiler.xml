@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="sbt 1" modules="lagom-internal-meta-project-cassandra,lagom-internal-meta-project-kafka,lagom-internal-meta-project-service-locator,membership,membership-api,membership-impl,membership-stream-api,membership-stream-impl,membership_1373" />
+  </component>
+</project>
